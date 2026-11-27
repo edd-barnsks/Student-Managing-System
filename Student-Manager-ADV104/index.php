@@ -3,10 +3,10 @@
 ini_set('display_errors','0'); ini_set('session.use_strict_mode','1');
 header('X-Content-Type-Options: nosniff'); header('X-Frame-Options: DENY'); header('Cache-Control: no-store'); header("Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'");
 session_name('student_manager_session'); session_set_cookie_params(['httponly'=>true,'samesite'=>'Lax','secure'=>!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS']!=='off','path'=>'/']); session_start();
-require __DIR__.'/config/database.php'; require __DIR__.'/includes/functions.php'; require __DIR__.'/includes/auth.php';
+require __DIR__.'/config/database.php'; require __DIR__.'/includes/functions.php'; require __DIR__.'/includes/auth.php'; require __DIR__.'/includes/grading.php'; require __DIR__.'/includes/academic.php'; require __DIR__.'/includes/terms.php'; require __DIR__.'/includes/assessments.php';
 define('APP_ENTRY',true);
 $page=query('page')?:'dashboard';
-$routes=['login'=>[], 'register'=>[], 'dashboard'=>['admin','teacher','student'],'students'=>['admin','teacher'],'classes'=>['admin','teacher','student'],'courses'=>['admin'],'staff'=>['admin'],'enrollments'=>['admin','teacher'],'grades'=>['admin','teacher','student'],'accounts'=>['admin'],'profile'=>['admin','teacher','student'],'audit'=>['admin'],'export'=>['admin'],'logout'=>['admin','teacher','student']];
+$routes=['login'=>[], 'register'=>[], 'dashboard'=>['admin','teacher','student','staff'],'students'=>['admin','teacher','staff'],'classes'=>['admin','teacher','student','staff'],'courses'=>['admin'],'terms'=>['admin'],'curriculum'=>['admin'],'staff'=>['admin'],'enrollments'=>['admin','staff'],'grades'=>['admin','teacher','student','staff'],'accounts'=>['admin'],'profile'=>['admin','teacher','student','staff'],'audit'=>['admin'],'export'=>['admin'],'logout'=>['admin','teacher','student','staff']];
 if(!array_key_exists($page,$routes))missing();
 $error=''; $user=null;
 try {

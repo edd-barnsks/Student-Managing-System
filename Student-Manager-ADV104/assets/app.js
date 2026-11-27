@@ -1,2 +1,14 @@
-// HTML confirmation is also enforced by PHP using the confirmation checkbox.
+// Confirmation is also enforced by PHP.
 document.querySelectorAll('form[data-confirm]').forEach(form=>form.addEventListener('submit',event=>{if(!window.confirm('Delete this record? This may be permanent.'))event.preventDefault();}));
+document.querySelectorAll('form[data-submit-grade]').forEach(form=>form.addEventListener('submit',event=>{if(!window.confirm('Submit the saved grade? The grade and individual marks will be locked.'))event.preventDefault();}));
+// Preview only; PHP recomputes and validates every mark on save.
+document.querySelectorAll('[data-grade-calculator]').forEach(form=>{
+ const output=form.querySelector('[data-grade-result]');const inputs=[...form.querySelectorAll('[data-weight]')];const groups=[...form.querySelectorAll('[data-assessment-group]')];
+ const valid=n=>/^\d{1,5}(\.\d{1,2})?$/.test(n.value)&&n.validity.valid;
+ function update(){let total=0,complete=true;for(const group of groups){let e=0,m=0,ok=true;const names=new Set();for(const row of group.querySelectorAll('.assessment-row')){const earned=row.querySelector('[data-earned]'),max=row.querySelector('[data-maximum]');const title=row.querySelector('input[name$="_title[]"]');const name=title.value.trim().toLowerCase();if(!name||names.has(name)||new TextEncoder().encode(title.value.trim()).length>100){ok=false;}names.add(name);if(!valid(earned)||!valid(max)||Number(max.value)<=0||Number(earned.value)>Number(max.value)){ok=false;continue;}e+=Math.round(Number(earned.value)*100);m+=Math.round(Number(max.value)*100);}const percentage=ok&&m>0?Math.floor((e*10000+Math.floor(m/2))/m):null;group.querySelector('[data-category-result]').textContent=percentage===null?'—':(percentage/100).toFixed(2)+'%';if(percentage===null)complete=false;else total+=percentage*(group.dataset.assessmentGroup==='exam'?40:20);}
+ for(const input of inputs){if(!valid(input)){complete=false;continue;}total+=Math.round(Number(input.value)*100)*Number(input.dataset.weight);}
+ output.textContent=complete?(Math.floor((total+50)/100)/100).toFixed(2):'—';
+ }
+ for(const group of groups){const rows=group.querySelector('[data-assessment-rows]');const add=group.querySelector('[data-add-assessment]');function sync(){const count=rows.children.length;add.disabled=count>=30;rows.querySelectorAll('[data-remove-assessment]').forEach(btn=>btn.disabled=count===1);update();}add.addEventListener('click',()=>{if(rows.children.length>=30)return;const copy=rows.firstElementChild.cloneNode(true);copy.querySelectorAll('input').forEach(i=>i.value='');rows.append(copy);sync();copy.querySelector('input').focus();});rows.addEventListener('click',e=>{const btn=e.target.closest('[data-remove-assessment]');if(btn&&rows.children.length>1){btn.closest('.assessment-row').remove();sync();}});sync();}
+ form.addEventListener('input',update);update();
+});

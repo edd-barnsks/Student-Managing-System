@@ -1,42 +1,34 @@
-# Student Manager — WS101 edition
+# Student Manager WS101 — V4
 
-A framework-free PHP 8.1+ / HTML / CSS / vanilla JavaScript and MySQL (or XAMPP MariaDB) conversion of the supplied ADV_104 project. It retains the dark dashboard, student records, classes, courses and grades, with separate student and staff authentication. Add your team members here before submission.
+Plain PHP 8.1+, HTML, CSS, vanilla JavaScript, MySQL/MariaDB. No Laravel, React, Composer or npm. Designed for the WS101 guide; your team should understand and test all code before submission.
 
-## XAMPP setup (Windows)
+## Upgrade your existing V3 installation (recommended)
 
-1. Extract the ZIP. Copy the `Student-Manager-WS101` folder into `D:\XAMPP\htdocs` (or your own XAMPP `htdocs`). Keep the original application and database as backups.
-2. Start Apache and MySQL in XAMPP. If Herd is occupying Apache's port, stop Herd's web server or configure Apache to use a different port.
-3. Open `http://localhost/phpmyadmin` and use Import to import `database/student_management_ws101.sql` **once**. This creates a separate database named `student_management_ws101`, not the original `student_management`. If the database already exists with tables, do not rerun the import; use a new empty database or back it up first. If using a limited DB account, have an administrator create the database first and import the schema with the database selected.
-4. Open `config/database.php`. The defaults are `127.0.0.1`, port `3306`, database `student_management_ws101`, user `root`, empty password. Update these to your local settings. Make sure PHP's `pdo_mysql` extension is enabled (normally included in XAMPP).
-5. Visit `http://localhost/Student-Manager-ADV104/`. If Apache uses another port, add it to the URL. No npm, Composer, Laravel, or PowerShell is required.
+1. Export a full SQL backup in phpMyAdmin and back up the old website folder. Stop using V3 (or earlier) after upgrading: old grade editors do not enforce V4 submission locks.
+2. In phpMyAdmin, select `student_management_ws101` and import **`database/upgrade_v4.sql`**. The script adds the new schema and updates the view. It does not delete or overwrite existing grades, accounts or enrollments. DDL commits independently, so back up first. If coming from V1 or V2, apply the previous missing upgrade scripts in order before V4.
+3. Optional: import `database/term_demo_v4.sql` if you want example terms and units on the known fictional V3 demo classes. It creates AY 2026-2027 first and second semesters and moves known demo offerings from the historical term to first semester, setting only unknown units to 3. Do not use it on real records; it is an illustrative policy, not official HCDC curriculum. Other existing classes retain the historical term and unknown units until set by an administrator. Second semester starts empty.
+4. Extract `Student-Manager-WS101-V4` into your XAMPP `htdocs` folder. Preserve your custom `config/database.php` settings. Start Apache and MySQL, and visit `http://localhost/Student-Manager-WS101-V4/`. Use the same accounts as V3. Do not continue using the old application against the upgraded database.
 
-### Local demo credentials
+## Fresh installation only
 
-Select the appropriate account type in the login form.
+Import `database/student_management_ws101.sql` into a NEW empty database (creates `student_management_ws101` and includes V4 schema and demo accounts). Optional on a fresh database: import `database/HCDC_WS101_sample_data.sql`, then `database/curriculum_demo_v3.sql`, then `database/term_demo_v4.sql`. Do not reimport old sample scripts into a populated V4 database with repeated subject codes across different terms. Configure `config/database.php` (defaults localhost/127.0.0.1, port 3306, root, blank password). Open the V4 folder URL. Demo login: admin / AdminDemo!2026; teacher / TeacherDemo!2026; student / StudentDemo!2026. Select the correct role. Local testing only: change demo passwords before shared use.
 
-| Role | Username | Password |
-|---|---|---|
-| Administrator | admin | AdminDemo!2026 |
-| Teacher | teacher | TeacherDemo!2026 |
-| Student | student | StudentDemo!2026 |
+## Academic terms and classes
 
-These are local demonstration credentials only. Change them using My account before any shared deployment. The demo teacher teaches DEMO101, and the demo student is enrolled in that class. The demo student has an initial grade of 90. Use the teacher account to change it, then sign in as the student to verify.
+- Admin > Academic terms: create a consecutive academic year such as 2026-2027 and choose first semester, second semester or summer.
+- Admin > Classes: choose the term, assign a teacher, enter subject units, code, title and schedule. Existing unassigned historical classes can be assigned their verified term and units. Existing enrolled classes with known terms or units are protected against historical changes. Reuse the same exact subject code when creating a new offering in a later term; each code is unique within a term. Up to three assignments per teacher per term, with existing overloads visible for review.
+- Admin > Curriculum: map each stable subject code once to a course/year. Future offerings with the same code inherit the mapping. Choose the original mapped class for prerequisites. The curriculum does not have separate semester rules: actual offerings in the chosen term determine availability.
+- Staff > Enrollments: find the student, select curriculum year and academic term, and choose eligible offerings. Earlier terms and imported historical grades can satisfy prerequisites. Already taken/enrolled subject codes remain blocked (repeat enrollment/retakes are not implemented). Staff may view grade summaries, not assessment editing or details.
+- Teacher > Classes: responsive cards grouped by term, subject units, schedule, enrolled count, roster link, and submission count in the roster. Filter by term. Teachers can access only their assigned classes.
 
-## Features and permissions
+## Individual assessments and grade submission
 
-- Administrator: CRUD students, courses, classes and staff; assign teachers to classes, enroll students, issue student activation codes, reset or disable student accounts, view all grades, export grades CSV, view audit history.
-- Teacher: view only assigned classes and their enrolled students; add, edit and delete grades for those enrollments. No account management. A grade is one score (0–100) per enrollment, as in the source project; no term/semester model added.
-- Student: view own profile, enrolled classes and grades only; change own password. No grade writing.
-- Administrator can view all grades but cannot write grades, honoring the explicit teacher-only rule. Administrators can assign teachers and manage accounts; a teacher can enter a grade only for an enrolled student in a class assigned to that teacher.
-- Registration is controlled: admin opens Student accounts, issues a 24-hour one-time code for a specific student, shares it privately, then student selects Activate student account on the login page. Staff creation is administrator-only.
-- A record with dependent enrollments, grades or assigned classes cannot be deleted until those dependencies are handled. Disable staff instead of deleting historical grade authors.
+Teacher > Grades: search by student, term or assigned class, then open a student and grading period. Add individual exam and quiz/activity rows (title, earned points, maximum points; up to 30 per category per student and period). Category percentage = sum earned / sum maximum x 100, rounded to two decimals. Enter the remaining project, attendance and participation percentages (0–100). The PHP server calculates the period grade with existing demo weights: exams 40%, quizzes/activities 20%, projects 25%, attendance 10%, participation 5%. Each period is weighted equally in the overall grade; all three must exist before overall is calculated. No official HCDC grading policy was supplied.
 
-## Source migration decisions
+Save draft, then review and submit the saved period. Submission locks **that student's period**, not the entire class. Unsaved changes are not submitted. Locked grades and their raw marks cannot be changed or deleted through the V4 teacher editor. Admin can reopen a locked period in Grades > subject detail, giving a reason; only the assigned teacher can then edit and resubmit. Every save, submission, reopening and deletion is audited. Staff remain read-only; students see their own breakdown including individual scores. Drafts remain visible and clearly labeled to preserve V3 visibility; they are not a publication gate. Existing V3 period scores are preserved without fabricating raw assessments. Teachers can submit those saved scores as-is or enter actual raw marks to revise them. Existing legacy scores are retained and labeled.
 
-The RAR includes `student_management-2.sql`. It already contained a single students table with a gender enum; male/female were not separate physical tables. The new UI has one student list. All three original student records and both grades are retained, including the student record named Admin (not treated as a staff account). The empty courses table is populated from the original course names. The old classes row is ADV1021 with teacher text Faith, but both grades reference ADV102. The new schema preserves ADV1021 and introduces an unassigned ADV102 placeholder with both original grades connected by student ID. Confirm the course-code mapping and teacher identity with your team, then assign the actual teacher via Classes. The original user table did not contain roles or student IDs and included one plaintext password; those accounts were not migrated or granted permissions. Issue new activation codes or create staff accounts after verifying identity. Existing user passwords are not copied. Demo records are separately labeled.
+Student > Grades: choose a named term to see a unit-weighted percentage average. It uses saved overall grades with known units only; coverage is shown, and incomplete subjects/unknown units are excluded. Not official HCDC GWA. Admin CSV includes academic term, units and number of locked periods. No class-wide assessment templates, repeat enrollments, or grade transmutation are added in this release.
 
-## Security and course requirements
+## Verification
 
-`config/database.php` central PDO connection; `includes/functions.php` reusable parameterized helpers, validation, escaping, error logging; `includes/auth.php` password verification, role checks, session handling; `index.php` route authorization and CSRF; `pages/` HTML GET/POST forms, role-specific queries and CRUD; `database/` SQL export with sample data; `logs/error.log` technical error logging (created on error); `pages/export.php` CSV file handling; `docs/TEST_CASES.md` local verification checklist. Passwords use password_hash/password_verify. Sessions regenerate on login and invalidate on password changes. Username-only remember cookie. All data queries use prepared PDO statements, user content is HTML escaped. `.htaccess` denies direct web access to private directories; use Apache with AllowOverride enabled and confirm it blocks database and logs URLs. Do not expose this development installation to the public internet. For production use HTTPS, a restricted DB account, credentials outside the web root, rate limiting, and backups.
-
-See `docs/DATABASE.md` for relations and `docs/TEST_CASES.md` for testing. PHP lint and limited unauthenticated HTTP checks were executed in the build environment, but no live MySQL/PDO MySQL driver was available there. Run the listed integration tests on XAMPP and record actual outcomes; do not submit unchecked tests as passing.
+Run `php tests/grading_test.php`, `php tests/academic_test.php`, `php tests/assessments_test.php` and check `docs/V4_TEST_CASES.md`. PHP syntax, pure logic and JavaScript syntax were checked in the development environment. Live MySQL/MariaDB and authenticated browser workflows still need local testing; do not record them as passing before testing. The migration was reviewed but could not be executed on a live database here. See `docs/README_V3_HISTORICAL.md` for original data decisions and previous version documentation, not current installation instructions.

@@ -8,7 +8,7 @@ function current_user(): ?array {
 }
 function require_user(array $roles=[]): array { $u=current_user(); if(!$u)redirect('login'); if($roles && !in_array($u['role'],$roles,true))deny(); return $u; }
 function login_user(string $role,string $username,string $password): bool {
-    if(!in_array($role,['student','teacher','admin'],true))return false;
+    if(!in_array($role,['student','teacher','admin','staff'],true))return false;
     $u=$role==='student'?one('SELECT id,password_hash,session_version FROM student_accounts WHERE username=? AND active=1',[$username]):one('SELECT id,password_hash,session_version FROM staff_accounts WHERE username=? AND role=? AND active=1',[$username,$role]);
     if(!$u || !password_verify($password,$u['password_hash']))return false;
     session_regenerate_id(true); $_SESSION=['auth'=>['id'=>(int)$u['id'],'role'=>$role,'version'=>(int)$u['session_version']]]; return true;
