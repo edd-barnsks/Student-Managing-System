@@ -2,6 +2,8 @@
 
 A framework-free PHP 8.1+ / HTML / CSS / vanilla JavaScript and MySQL
 
+Use Xampp-PHPmyadmin imports of sql files go there
+
 Place Student-Manager-ADV104 into htdocs of XAMPP
 
 Import student_management_ws101.sql located in database/student_management_ws101.sql
